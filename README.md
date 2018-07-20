@@ -27,7 +27,7 @@ client.currencies()
 
 <details open >
 
-`openexchangerates(api_key: string, timeout: int8, round_float: bool, base: string, local_base: string)`
+`OpenExchangeRates(api_key: string, timeout: int8, round_float: bool, base: string, local_base: string)`
 
 **Description:** Returns JSON with current international exchange prices and Bitcoin price.
 
