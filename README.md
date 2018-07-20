@@ -17,12 +17,13 @@ import openexchangerates
 client = OpenExchangeRates(api_key: "21e7c27676972", . . . )
 client.latest()
 client.currencies()
+ . . .
 ```
 
 
 # Documentation
 
-<details>
+<details open >
 
 `openexchangerates(api_key: string, timeout: int8, round_float: bool, base: string, local_base: string)`
 
