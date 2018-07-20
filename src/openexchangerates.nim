@@ -3,6 +3,7 @@
 ##
 ## - Get your API Key for Free at https://openexchangerates.org/account/app-ids. Ported from Python.
 ## - This module should work OK with and without SSL (-d:ssl), API supports both.
+## - This Module supports both Sync and Async at the same time.
 
 import asyncdispatch, json, httpclient, strformat, strutils, times, math
 
@@ -18,7 +19,7 @@ const
 
 type
   OpenExchangeRatesBase*[HttpType] = object
-    timeout*: int
+    timeout*: int8
     api_key*, base*, local_base*: string
     round_float*, prettyprint*, show_alternative*: bool
 
@@ -64,6 +65,8 @@ proc historical*(this: OER | AsyncOER, since_date: DateTime): Future[JsonNode] {
 
 
 when is_main_module:
+
+  # Sync client.
   let client = OER(
     timeout: 9,
     api_key: "",  # Add your api_key here!.
@@ -74,12 +77,10 @@ when is_main_module:
     show_alternative: true
   )
   #echo client.latest()
-  #echo client.latest_async()
   echo client.currencies()            # Works with and without api_key.
-  #discard client.currencies_async()  # Works with and without api_key.
   #echo client.historical(now())
-  #echo client.historical_async(now())
 
+  # Async client.
   proc test {.async.} =
     let client = AsyncOER(
       timeout: 9,
