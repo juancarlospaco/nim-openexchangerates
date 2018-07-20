@@ -1,6 +1,6 @@
 # nim-openexchangerates
 
-OpenExchangeRates API Client for Nim.
+[OpenExchangeRates](https://openexchangerates.org) API Client for [Nim](https://nim-lang.org).
 
 ![screenshot](https://source.unsplash.com/ir5MHI6rPg0/800x401 "Photo by https://unsplash.com/@agent_illustrateur")
 
