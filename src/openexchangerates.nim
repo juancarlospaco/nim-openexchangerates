@@ -39,27 +39,27 @@ template apicall(this: OpenExchangeRates, endpoint: string): untyped =
       for key, val in result.pairs:
         result[key] = %round(parseFloat($val), 2)
 
-method latest*(this: OpenExchangeRates): JsonNode {.base.} =
+proc latest*(this: OpenExchangeRates): JsonNode =
   ## Fetch latest exchange rate data from openexchangerates.
   apicall(this, endpoint_latest)
 
-method currencies*(this: OpenExchangeRates): JsonNode {.base.} =
+proc currencies*(this: OpenExchangeRates): JsonNode =
   ## Fetch current currency data from openexchangerates.
   apicall(this, endpoint_currencies)
 
-method historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode {.base.} =
+proc historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode =
   ## Fetch historical exchange rate data from openexchangerates.
   apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
 
 
 when is_main_module:
   let client = OpenExchangeRates(timeout: 9,
-                                 api_key: "",
+                                 api_key: "",  # Add your api_key here!.
                                  base: "USD",
                                  local_base: "USD",
                                  round_float: true,
                                  prettyprint: true,
                                  show_alternative: true)
   #echo client.latest()
-  echo client.currencies()
+  echo client.currencies()  # Works with and without api_key.
   #echo client.historical(now())
