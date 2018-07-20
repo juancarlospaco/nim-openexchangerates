@@ -6,6 +6,7 @@
 
 import asyncdispatch, json, httpclient, strformat, strutils, times, math
 
+
 when defined(ssl):
   const base_url = "https://openexchangerates.org/api"  ## SSL is present.
 else:
@@ -16,20 +17,27 @@ const
   endpoint_historical = base_url & "/historical/"
 
 type
-  OpenExchangeRates* = object
-    timeout*: int8
+  OpenExchangeRatesBase*[HttpType] = object
+    timeout*: int
     api_key*, base*, local_base*: string
     round_float*, prettyprint*, show_alternative*: bool
 
-template apicall(this: OpenExchangeRates, endpoint: string): untyped =
+  OER* = OpenExchangeRatesBase[HttpClient]
+  AsyncOER* = OpenExchangeRatesBase[AsyncHttpClient]
+
+
+proc apicall(this: OER | AsyncOER, endpoint: string): Future[JsonNode] {.multisync.} =
   let
     q0 = fmt"?app_id={this.api_key.strip}&base={this.base.toUpperAscii.strip}"
     q1 = fmt"&prettyprint={this.prettyprint}&show_alternative={this.show_alternative}"
-  # echo endpoint & q0 & q1
-  when declared(await):
-    result = parseJson(await(await newAsyncHttpClient().get(endpoint & q0 & q1).body))
-  else:
-    result = parseJson(newHttpClient(timeout=this.timeout * 1000).get(endpoint & q0 & q1).body)
+    url = endpoint & q0 & q1
+    # echo endpoint & q0 & q1
+
+  let resp =
+    when this is AsyncOER: await newAsyncHttpClient().get(url)
+    else: newHttpClient(timeout=this.timeout * 1000).get(url)
+
+  result = parseJson(await resp.body)
   # latest and historical has "rates" key with all the data.
   if result.hasKey("rates"):
     result = result["rates"]
@@ -42,42 +50,46 @@ template apicall(this: OpenExchangeRates, endpoint: string): untyped =
       for key, val in result.pairs:
         result[key] = %round(parseFloat($val), 2)
 
-proc latest*(this: OpenExchangeRates): JsonNode =
+proc latest*(this: OER | AsyncOER): Future[JsonNode] {.multisync.} =
   ## Fetch latest exchange rate data from openexchangerates.
-  apicall(this, endpoint_latest)
+  result = await apicall(this, endpoint_latest)
 
-proc currencies*(this: OpenExchangeRates): JsonNode =
+proc currencies*(this: OER | AsyncOER): Future[JsonNode] {.multisync.} =
   ## Fetch current currency data from openexchangerates.
-  apicall(this, endpoint_currencies)
+  result = await apicall(this, endpoint_currencies)
 
-proc historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode =
+proc historical*(this: OER | AsyncOER, since_date: DateTime): Future[JsonNode] {.multisync.} =
   ## Fetch historical exchange rate data from openexchangerates.
-  apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
-
-proc latest_async*(this: OpenExchangeRates): Future[JsonNode] {.async.} =
-  ## Fetch latest exchange rate data from openexchangerates.
-  apicall(this, endpoint_latest)
-
-proc currencies_async*(this: OpenExchangeRates): Future[JsonNode] {.async.} =
-  ## Fetch current currency data from openexchangerates.
-  apicall(this, endpoint_currencies)
-
-proc historical_async*(this: OpenExchangeRates, since_date: DateTime): Future[JsonNode] {.async.} =
-  ## Fetch historical exchange rate data from openexchangerates.
-  apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
+  result = await apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
 
 
 when is_main_module:
-  let client = OpenExchangeRates(timeout: 9,
-                                 api_key: "",  # Add your api_key here!.
-                                 base: "USD",
-                                 local_base: "USD",
-                                 round_float: true,
-                                 prettyprint: true,
-                                 show_alternative: true)
+  let client = OER(
+    timeout: 9,
+    api_key: "",  # Add your api_key here!.
+    base: "USD",
+    local_base: "USD",
+    round_float: true,
+    prettyprint: true,
+    show_alternative: true
+  )
   #echo client.latest()
   #echo client.latest_async()
-  #echo client.currencies()            # Works with and without api_key.
-  discard client.currencies_async()  # Works with and without api_key.
+  echo client.currencies()            # Works with and without api_key.
+  #discard client.currencies_async()  # Works with and without api_key.
   #echo client.historical(now())
   #echo client.historical_async(now())
+
+  proc test {.async.} =
+    let client = AsyncOER(
+      timeout: 9,
+      api_key: "",  # Add your api_key here!.
+      base: "USD",
+      local_base: "USD",
+      round_float: true,
+      prettyprint: true,
+      show_alternative: true
+    )
+    echo await client.currencies()
+
+  waitFor(test())
