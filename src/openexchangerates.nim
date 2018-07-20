@@ -4,12 +4,12 @@
 ## - Get your API Key for Free at https://openexchangerates.org/account/app-ids. Ported from Python.
 ## - This module should work OK with and without SSL (-d:ssl), API supports both.
 
-import json, httpclient, strformat, times
+import json, httpclient, strformat, strutils, times, math
 
 when defined(ssl):
   const base_url = "https://openexchangerates.org/api"  ## SSL is present.
 else:
-  const base_url = "http://openexchangerates.org/api"  ## SSL Not present.
+  const base_url = "http://openexchangerates.org/api"   ## SSL Not present.
 const
   endpoint_latest = base_url & "/latest.json"
   endpoint_currencies = base_url & "/currencies.json"
@@ -19,20 +19,37 @@ type
   OpenExchangeRates* = object
     timeout*: int8
     api_key*, base*, local_base*: string
-    round_float*, html_table_header*: bool
+    round_float*, prettyprint*, show_alternative*: bool
+
+template apicall(this: OpenExchangeRates, endpoint: string): untyped =
+  let
+    q0 = fmt"?app_id={this.api_key.strip}&base={this.base.toUpperAscii.strip}"
+    q1 = fmt"&prettyprint={this.prettyprint}&show_alternative={this.show_alternative}"
+  # echo endpoint & q0 & q1
+  result = parseJson(get(endpoint & q0 & q1, timeout=this.timeout * 1000).body)
+  # latest and historical has "rates" key with all the data.
+  if result.hasKey("rates"):
+    result = result["rates"]
+    # Local base price conversions.
+    if this.local_base != this.base and result.hasKey(this.local_base):
+      for key, val in result.pairs:
+        result[key] = %round(parseFloat($val) / parseFloat($result[this.local_base]), 8)
+    # Round prices to 2 decimals precision.
+    if this.round_float:
+      for key, val in result.pairs:
+        result[key] = %round(parseFloat($val), 2)
 
 method latest*(this: OpenExchangeRates): JsonNode {.base.} =
   ## Fetch latest exchange rate data from openexchangerates.
-  %get(fmt"{endpoint_latest}?app_id={this.api_key}?base={this.base}").body
+  apicall(this, endpoint_latest)
 
 method currencies*(this: OpenExchangeRates): JsonNode {.base.} =
   ## Fetch current currency data from openexchangerates.
-  %get(fmt"{endpoint_currencies}?app_id={this.api_key}?base={this.base}").body
+  apicall(this, endpoint_currencies)
 
 method historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode {.base.} =
   ## Fetch historical exchange rate data from openexchangerates.
-  let since_date = since_date.format("yyyy-MM-dd")
-  %get(fmt"{endpoint_historical & since_date}?app_id={this.api_key}?base={this.base}").body
+  apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
 
 
 when is_main_module:
@@ -40,7 +57,9 @@ when is_main_module:
                                  api_key: "",
                                  base: "USD",
                                  local_base: "USD",
-                                 round_float: true)
+                                 round_float: true,
+                                 prettyprint: true,
+                                 show_alternative: true)
+  #echo client.latest()
   echo client.currencies()
-  if client.api_key.len.bool:
-    echo client.latest()
+  #echo client.historical(now())
