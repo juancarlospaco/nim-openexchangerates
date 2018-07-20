@@ -35,7 +35,7 @@ method historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode {.ba
   %get(fmt"{endpoint_historical & since_date}?app_id={this.api_key}?base={this.base}").body
 
 
-if is_main_module:
+when is_main_module:
   let client = OpenExchangeRates(timeout: 9,
                                  api_key: "",
                                  base: "USD",
