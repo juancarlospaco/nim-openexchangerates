@@ -32,7 +32,6 @@ client.currencies()
 **Arguments:**
 - `api_key` Your API Key, [you can get one API Key for Free](https://openexchangerates.org/account/app-ids), string type.
 - `timeout` Timeout on Seconds for network connections, integer 8bits type, optional.
-- `use_float` `True` for `float`, `False` for `decimal.Decimal`, boolean type, optional.
 - `round_float` `True` to round floats to 2 decimals, boolean type, optional.
 - `base` Base currency, **Only for Pay accounts!**, string type, optional.
 - `local_base` Local Base currency, for Free accounts, to calculate values locally (offline), string type, optional.
