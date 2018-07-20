@@ -30,6 +30,8 @@ client.currencies()
 `OpenExchangeRates(api_key: string, timeout: int8, round_float: bool, base: string, local_base: string)`
 
 **Description:** Returns JSON with current international exchange prices and Bitcoin price.
+[This module is a Nim port of a Python module.](https://github.com/juancarlospaco/openexchangerate#openexchangerate)
+
 
 **Arguments:**
 - `api_key` Your API Key, [you can get one API Key for Free](https://openexchangerates.org/account/app-ids), string type.
