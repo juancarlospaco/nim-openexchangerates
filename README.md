@@ -20,6 +20,8 @@ client.currencies()
  . . .
 ```
 
+- Check the source code, is also executable by itself for an example.
+
 
 # Documentation
 
