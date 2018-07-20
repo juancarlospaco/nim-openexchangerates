@@ -27,7 +27,7 @@ template apicall(this: OpenExchangeRates, endpoint: string): untyped =
     q1 = fmt"&prettyprint={this.prettyprint}&show_alternative={this.show_alternative}"
   # echo endpoint & q0 & q1
   when declared(await):
-    result = parseJson(await newAsyncHttpClient().get(endpoint & q0 & q1).body)
+    result = parseJson(await(await newAsyncHttpClient().get(endpoint & q0 & q1).body))
   else:
     result = parseJson(newHttpClient(timeout=this.timeout * 1000).get(endpoint & q0 & q1).body)
   # latest and historical has "rates" key with all the data.
@@ -77,7 +77,7 @@ when is_main_module:
                                  show_alternative: true)
   #echo client.latest()
   #echo client.latest_async()
-  echo client.currencies()            # Works with and without api_key.
-  #discard client.currencies_async()  # Works with and without api_key.
+  #echo client.currencies()            # Works with and without api_key.
+  discard client.currencies_async()  # Works with and without api_key.
   #echo client.historical(now())
   #echo client.historical_async(now())
