@@ -4,7 +4,7 @@
 ## - Get your API Key for Free at https://openexchangerates.org/account/app-ids. Ported from Python.
 ## - This module should work OK with and without SSL (-d:ssl), API supports both.
 
-import json, httpclient, strformat, strutils, times, math
+import asyncdispatch, json, httpclient, strformat, strutils, times, math
 
 when defined(ssl):
   const base_url = "https://openexchangerates.org/api"  ## SSL is present.
@@ -26,7 +26,10 @@ template apicall(this: OpenExchangeRates, endpoint: string): untyped =
     q0 = fmt"?app_id={this.api_key.strip}&base={this.base.toUpperAscii.strip}"
     q1 = fmt"&prettyprint={this.prettyprint}&show_alternative={this.show_alternative}"
   # echo endpoint & q0 & q1
-  result = parseJson(get(endpoint & q0 & q1, timeout=this.timeout * 1000).body)
+  when declared(await):
+    result = parseJson(await newAsyncHttpClient().get(endpoint & q0 & q1).body)
+  else:
+    result = parseJson(newHttpClient(timeout=this.timeout * 1000).get(endpoint & q0 & q1).body)
   # latest and historical has "rates" key with all the data.
   if result.hasKey("rates"):
     result = result["rates"]
@@ -51,6 +54,18 @@ proc historical*(this: OpenExchangeRates, since_date: DateTime): JsonNode =
   ## Fetch historical exchange rate data from openexchangerates.
   apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
 
+proc latest_async*(this: OpenExchangeRates): Future[JsonNode] {.async.} =
+  ## Fetch latest exchange rate data from openexchangerates.
+  apicall(this, endpoint_latest)
+
+proc currencies_async*(this: OpenExchangeRates): Future[JsonNode] {.async.} =
+  ## Fetch current currency data from openexchangerates.
+  apicall(this, endpoint_currencies)
+
+proc historical_async*(this: OpenExchangeRates, since_date: DateTime): Future[JsonNode] {.async.} =
+  ## Fetch historical exchange rate data from openexchangerates.
+  apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
+
 
 when is_main_module:
   let client = OpenExchangeRates(timeout: 9,
@@ -61,5 +76,8 @@ when is_main_module:
                                  prettyprint: true,
                                  show_alternative: true)
   #echo client.latest()
-  echo client.currencies()  # Works with and without api_key.
+  #echo client.latest_async()
+  echo client.currencies()            # Works with and without api_key.
+  #discard client.currencies_async()  # Works with and without api_key.
   #echo client.historical(now())
+  #echo client.historical_async(now())
