@@ -8,8 +8,6 @@ Worldwide exchange prices + Bitcoin price + Gold price. No dependencies.
 
 This module should work OK with and without SSL `-d:ssl`, API supports both.
 
-[Big thanks to Yardanico for the Async and Sync support with the same code without duplication.](https://gist.github.com/Yardanico/8618f4f21e2396eb443309971672f49d)
-
 
 # Use
 
