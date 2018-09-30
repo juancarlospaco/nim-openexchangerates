@@ -64,8 +64,8 @@ proc historical*(this: OER | AsyncOER, since_date: DateTime): Future[JsonNode] {
   result = await apicall(this, endpoint_historical & since_date.format("yyyy-MM-dd") & ".json")
 
 
-when is_main_module:
-
+runnableExamples:
+  import asyncdispatch, json, httpclient, strformat, strutils, times, math
   # Sync client.
   let client = OER(
     timeout: 9,
